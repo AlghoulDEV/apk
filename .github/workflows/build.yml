@@ -12,15 +12,13 @@ jobs:
     env:
       ANDROID_HOME: ${{ github.workspace }}/.buildozer/android/platform/android-sdk
       ANDROID_SDK_ROOT: ${{ github.workspace }}/.buildozer/android/platform/android-sdk
+      PATH: ${{ github.workspace }}/.buildozer/android/platform/android-sdk/cmdline-tools/latest/bin:${{ github.workspace }}/.buildozer/android/platform/android-sdk/platform-tools:${{ env.PATH }}
 
     steps:
-    - name: Install tar
-      run: sudo apt update && sudo apt install -y tar unzip wget curl git
-
     - name: Checkout code
       uses: actions/checkout@v3
 
-    - name: Set up Java (required by Android SDK)
+    - name: Set up Java
       uses: actions/setup-java@v4
       with:
         distribution: temurin
@@ -45,7 +43,9 @@ jobs:
         python -m pip install buildozer cython
 
     - name: Create Android SDK directories
-      run: mkdir -p $ANDROID_HOME/cmdline-tools
+      run: |
+        mkdir -p $ANDROID_HOME
+        mkdir -p $ANDROID_HOME/cmdline-tools
 
     - name: Download Android command line tools
       run: |
@@ -58,14 +58,16 @@ jobs:
     - name: Install Android SDK packages
       run: |
         yes | $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager --sdk_root=$ANDROID_HOME \
-          "platform-tools" "platforms;android-33" "build-tools;33.0.2"
+          "platform-tools" \
+          "platforms;android-33" \
+          "build-tools;33.0.2"
 
     - name: Accept Android SDK licenses
-      run: yes | $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager --sdk_root=$ANDROID_HOME --licenses || true
+      run: |
+        yes | $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager --sdk_root=$ANDROID_HOME --licenses || true
 
     - name: Build APK
       run: |
-        export PATH=$ANDROID_HOME/cmdline-tools/latest/bin:$ANDROID_HOME/platform-tools:$PATH
         buildozer android debug
 
     - name: Upload APK

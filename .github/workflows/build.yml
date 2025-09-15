@@ -12,7 +12,6 @@ jobs:
     env:
       ANDROID_HOME: ${{ github.workspace }}/.buildozer/android/platform/android-sdk
       ANDROID_SDK_ROOT: ${{ github.workspace }}/.buildozer/android/platform/android-sdk
-      PATH: ${{ github.workspace }}/.buildozer/android/platform/android-sdk/cmdline-tools/latest/bin:${{ github.workspace }}/.buildozer/android/platform/android-sdk/platform-tools:${{ env.PATH }}
 
     steps:
     - name: Install tar
@@ -46,8 +45,7 @@ jobs:
         python -m pip install buildozer cython
 
     - name: Create Android SDK directories
-      run: |
-        mkdir -p $ANDROID_HOME/cmdline-tools
+      run: mkdir -p $ANDROID_HOME/cmdline-tools
 
     - name: Download Android command line tools
       run: |
@@ -66,9 +64,9 @@ jobs:
       run: yes | $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager --sdk_root=$ANDROID_HOME --licenses || true
 
     - name: Build APK
-      env:
-        ANDROID_HOME: ${{ github.workspace }}/.buildozer/android/platform/android-sdk
-      run: buildozer android debug
+      run: |
+        export PATH=$ANDROID_HOME/cmdline-tools/latest/bin:$ANDROID_HOME/platform-tools:$PATH
+        buildozer android debug
 
     - name: Upload APK
       uses: actions/upload-artifact@v4

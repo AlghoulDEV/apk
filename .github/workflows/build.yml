@@ -10,15 +10,15 @@ jobs:
     runs-on: ubuntu-latest
 
     env:
-      ANDROID_HOME: ${{ runner.home }}/.buildozer/android/platform/android-sdk
-      ANDROID_SDK_ROOT: ${{ runner.home }}/.buildozer/android/platform/android-sdk
-      PATH: ${{ runner.home }}/.buildozer/android/platform/android-sdk/cmdline-tools/latest/bin:${{ runner.home }}/.buildozer/android/platform/android-sdk/platform-tools:${{ env.PATH }}
+      ANDROID_HOME: $HOME/.buildozer/android/platform/android-sdk
+      ANDROID_SDK_ROOT: $HOME/.buildozer/android/platform/android-sdk
+      PATH: $HOME/.buildozer/android/platform/android-sdk/cmdline-tools/latest/bin:$HOME/.buildozer/android/platform/android-sdk/platform-tools:$PATH
 
     steps:
     - name: Checkout code
       uses: actions/checkout@v3
 
-    - name: Set up Java (required by Android SDK)
+    - name: Set up Java
       uses: actions/setup-java@v4
       with:
         distribution: temurin
@@ -50,31 +50,21 @@ jobs:
     - name: Download Android command line tools
       run: |
         cd $HOME
-        # download latest commandline tools; URL may change in the future
         wget -q https://dl.google.com/android/repository/commandlinetools-linux-9477386_latest.zip -O cmdline-tools.zip
         unzip -q cmdline-tools.zip -d $ANDROID_HOME/cmdline-tools
-        # move to "latest" dir expected by sdkmanager usage
         mv $ANDROID_HOME/cmdline-tools/cmdline-tools $ANDROID_HOME/cmdline-tools/latest
         rm cmdline-tools.zip
 
-    - name: Install Android SDK packages (platform-tools, platform 33, build-tools 33.0.2)
+    - name: Install Android SDK packages
       run: |
-        yes | $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager --sdk_root=$ANDROID_HOME --install "platform-tools" "platforms;android-33" "build-tools;33.0.2" "platforms;android-33"
+        yes | $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager --sdk_root=$ANDROID_HOME --install "platform-tools" "platforms;android-33" "build-tools;33.0.2"
 
     - name: Accept Android SDK licenses
       run: |
         yes | $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager --sdk_root=$ANDROID_HOME --licenses || true
 
-    - name: Show sdkmanager list (debug)
-      run: |
-        $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager --sdk_root=$ANDROID_HOME --list
-
     - name: Build APK
-      env:
-        # ensure buildozer can find Android SDK / NDK locations under ~/.buildozer
-        ANDROID_HOME: ${{ runner.home }}/.buildozer/android/platform/android-sdk
       run: |
-        # run buildozer; it will download python-for-android etc and use SDK we installed
         buildozer android debug
 
     - name: Upload APK
